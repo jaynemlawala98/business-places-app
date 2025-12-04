@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#4A90A4">
+    <title>My Business Places</title>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* ===== STYLES ===== */
+        :root {
+            --primary: #4A90A4;
+            --primary-dark: #357a8c;
+            --bg: #f0f2f5;
+            --card: #ffffff;
+            --text: #1a1a2e;
+            --text-light: #666;
+            --border: #e0e0e0;
+            --success: #27ae60;
+            --danger: #e74c3c;
+        }
+
+        [data-theme="dark"] {
+            --bg: #1a1a2e;
+            --card: #16213e;
+            --text: #eee;
+            --text-light: #aaa;
+            --border: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+
+        /* Search */
+        .search-box {
+            margin: 15px;
+            display: flex;
+            align-items: center;
+            background: var(--card);
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .search-box i {
+            color: var(--text-light);
+            margin-right: 10px;
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            background: none;
+            font-size: 1rem;
+            color: var(--text);
+            outline: none;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            padding: 15px;
+            background: var(--card);
+            margin: 0 15px 15px;
+            border-radius: 12px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        /* Places Grid */
+        .places {
+            padding: 0 15px 100px;
+            display: grid;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .places { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (min-width: 900px) {
+            .places { grid-template-columns: repeat(3, 1fr); max-width: 1000px; margin: 0 auto; }
+        }
+
+        /* Place Card */
+        .card {
+            background: var(--card);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+        }
+
+        .card-img {
+            height: 160px;
+            position: relative;
+        }
+
+        .card-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+
+        .card-fav {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: white;
+            border: none;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            color: #ccc;
+        }
+
+        .card-fav.active {
+            color: #e74c3c;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-address {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            color: var(--text-light);
+            font-size: 0.85rem;
+        }
+
+        .card-address i {
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+        }
+
+        .empty i {
+            font-size: 4rem;
+            color: var(--primary);
+            opacity: 0.5;
+        }
+
+        .empty h3 {
+            margin: 20px 0 10px;
+            color: var(--text);
+        }
+
+        .empty p {
+            color: var(--text-light);
+        }
+
+        .empty.hide {
+            display: none;
+        }
+
+        /* FAB Button */
+        .fab {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(74, 144, 164, 0.5);
+            z-index: 50;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 200;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-box {
+            background: var(--card);
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            background: var(--card);
+        }
+
+        .modal-head h2 {
+            font-size: 1.2rem;
+        }
+
+        .close-btn {
+            background: var(--bg);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .field {
+            margin-bottom: 18px;
+        }
+
+        .field label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text);
+        }
+
+        .field label i {
+            color: var(--primary);
+            margin-right: 6px;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+            background: var(--card);
+            color: var(--text);
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .field textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* Photo Box */
+        .photo-box {
+            width: 100%;
+            height: 180px;
+            background: var(--bg);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .photo-box video,
+        .photo-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-box .placeholder {
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        .photo-box .placeholder i {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .photo-btns {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-photo {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid var(--border);
+            background: var(--card);
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-photo:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Location Button */
+        .btn-loc {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .btn-loc:disabled {
+            opacity: 0.7;
+        }
+
+        .loc-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .loc-success.show {
+            display: flex;
+        }
+
+        /* Address Input with Suggestions */
+        .address-wrapper {
+            position: relative;
+        }
+
+        .address-suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--card);
+            border: 2px solid var(--primary);
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+
+        .address-suggestions.show {
+            display: block;
+        }
+
+        .suggestion-item {
+            padding: 12px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .suggestion-item:hover {
+            background: var(--bg);
+        }
+
+        .suggestion-item i {
+            color: var(--primary);
+            margin-top: 3px;
+        }
+
+        .suggestion-item span {
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .suggestion-loading {
+            padding: 15px;
+            text-align: center;
+            color: var(--text-light);
+        }
+
+        /* Checkbox */
+        .checkbox {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox input {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Modal Footer */
+        .modal-foot {
+            display: flex;
+            gap: 10px;
+            padding: 18px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-cancel {
+            padding: 14px 20px;
+            background: var(--bg);
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text);
+        }
+
+        .btn-save {
+            flex: 1;
+            padding: 14px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* View Modal */
+        .view-box {
+            position: relative;
+        }
+
+        .view-box .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .view-img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .view-body {
+            padding: 20px;
+        }
+
+        .view-cat {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .view-body h2 {
+            margin-bottom: 15px;
+        }
+
+        .view-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            color: var(--text-light);
+        }
+
+        .view-row i {
+            color: var(--primary);
+            margin-top: 3px;
+            width: 20px;
+        }
+
+        .view-row a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .view-notes {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .view-notes strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .view-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .view-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: var(--primary);
+            color: white;
+        }
+
+        .view-btn.red {
+            background: var(--danger);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(50px);
+            background: #333;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 300;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast i {
+            color: #27ae60;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1><i class="fas fa-map-marker-alt"></i> My Places</h1>
+        <button class="header-btn" id="themeBtn"><i class="fas fa-moon"></i></button>
+    </div>
+
+    <!-- SEARCH -->
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search places...">
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num" id="statTotal">0</div>
+            <div class="stat-label">Total Places</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="statFav">0</div>
+            <div class="stat-label">Favorites</div>
+        </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty" id="emptyState">
+        <i class="fas fa-map-marked-alt"></i>
+        <h3>No Places Saved Yet</h3>
+        <p>Tap the + button to add your first place</p>
+    </div>
+
+    <!-- PLACES LIST -->
+    <div class="places" id="placesList"></div>
+
+    <!-- ADD BUTTON -->
+    <button class="fab" id="addBtn"><i class="fas fa-plus"></i></button>
+
+    <!-- ADD MODAL -->
+    <div class="modal" id="addModal">
+        <div class="modal-box">
+            <div class="modal-head">
+                <h2><i class="fas fa-plus-circle"></i> Add Place</h2>
+                <button class="close-btn" id="closeAdd"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                
+                <!-- Photo -->
+                <div class="field">
+                    <label><i class="fas fa-camera"></i> Photo (Optional)</label>
+                    <div class="photo-box" id="photoBox">
+                        <video id="videoEl" autoplay playsinline style="display:none;"></video>
+                        <img id="previewImg" style="display:none;">
+                        <div class="placeholder" id="photoPlaceholder">
+                            <i class="fas fa-image"></i>
+                            <span>No photo yet</span>
+                        </div>
+                    </div>
+                    <div class="photo-btns">
+                        <button type="button" class="btn-photo" id="cameraBtn">
+                            <i class="fas fa-camera"></i> Camera
+                        </button>
+                        <button type="button" class="btn-photo" id="uploadBtn">
+                            <i class="fas fa-upload"></i> Upload
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display:none;">
+                </div>
+
+                <!-- Location -->
+                <div class="field">
+                    <label><i class="fas fa-map-marker-alt"></i> Location</label>
+                    <button type="button" class="btn-loc" id="locBtn">
+                        <i class="fas fa-crosshairs"></i> Get Current Location
+                    </button>
+                    <div class="loc-success" id="locSuccess">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="locText">Location saved!</span>
+                    </div>
+                    <div class="address-wrapper">
+                        <input type="text" id="addressInput" placeholder="Or type address to search..." autocomplete="off">
+                        <div class="address-suggestions" id="addressSuggestions"></div>
+                    </div>
+                </div>
+
+                <!-- Name -->
+                <div class="field">
+                    <label><i class="fas fa-tag"></i> Place Name *</label>
+                    <input type="text" id="nameInput" placeholder="e.g., Client Office Mumbai">
+                </div>
+
+                <!-- Category -->
+                <div class="field">
+                    <label><i class="fas fa-folder"></i> Category</label>
+                    <select id="catSelect">
+                        <option value="office">🏢 Office</option>
+                        <option value="shop">🏪 Shop</option>
+                        <option value="warehouse">🏭 Warehouse</option>
+                        <option value="client">👤 Client</option>
+                        <option value="supplier">📦 Supplier</option>
+                        <option value="other">📍 Other</option>
+                    </select>
+                </div>
+
+                <!-- Notes -->
+                <div class="field">
+                    <label><i class="fas fa-sticky-note"></i> Notes</label>
+                    <textarea id="notesInput" placeholder="Any notes..."></textarea>
+                </div>
+
+                <!-- Phone -->
+                <div class="field">
+                    <label><i class="fas fa-phone"></i> Contact Phone (Optional)</label>
+                    <input type="tel" id="phoneInput" placeholder="Phone number">
+                </div>
+
+                <!-- Favorite -->
+                <div class="checkbox">
+                    <input type="checkbox" id="favCheck">
+                    <label><i class="fas fa-heart"></i> Mark as Favorite</label>
+                </div>
+
+            </div>
+            <div class="modal-foot">
+                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+                <button type="button" class="btn-save" id="saveBtn">Save Place</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW MODAL -->
+    <div class="modal" id="viewModal">
+        <div class="modal-box view-box">
+            <button class="close-btn" id="closeView"><i class="fas fa-times"></i></button>
+            <img class="view-img" id="viewImg" src="">
+            <div class="view-body">
+                <span class="view-cat" id="viewCat"></span>
+                <h2 id="viewName"></h2>
+                <div class="view-row">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="viewAddr"></span>
+                </div>
+                <div class="view-row" id="viewPhoneRow" style="display:none;">
+                    <i class="fas fa-phone"></i>
+                    <a id="viewPhone" href=""></a>
+                </div>
+                <div class="view-row">
+                    <i class="fas fa-calendar"></i>
+                    <span id="viewDate"></span>
+                </div>
+                <div class="view-notes" id="viewNotesBox" style="display:none;">
+                    <strong>Notes:</strong>
+                    <span id="viewNotes"></span>
+                </div>
+                <div class="view-btns">
+                    <button class="view-btn" id="navBtn"><i class="fas fa-directions"></i> Navigate</button>
+                    <button class="view-btn" id="favBtn"><i class="far fa-heart"></i> Favorite</button>
+                    <button class="view-btn red" id="delBtn"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastText">Success!</span>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // ========== DATA ==========
+        let places = [];
+        let currentPlace = null;
+        let photoData = null;
+        let locationData = null;
+        let cameraStream = null;
+        let searchTimeout = null;
+
+        // ========== INIT ==========
+        window.onload = function() {
+            console.log('App loaded!');
+            loadData();
+            render();
+            loadTheme();
+            setupClicks();
+        };
+
+        // ========== LOAD/SAVE ==========
+        function loadData() {
+            try {
+                const saved = localStorage.getItem('myBusinessPlaces');
+                places = saved ? JSON.parse(saved) : [];
+                console.log('Loaded:', places.length, 'places');
+            } catch(e) {
+                places = [];
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('myBusinessPlaces', JSON.stringify(places));
+        }
+
+        // ========== THEME ==========
+        function loadTheme() {
+            const theme = localStorage.getItem('appTheme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeBtn').innerHTML = 
+                theme === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme');
+            const next = current === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', next);
+            localStorage.setItem('appTheme', next);
+            document.getElementById('themeBtn').innerHTML = 
+                next === 'light' ? '<i class="fas fa-moon"></i>' : '<i class="fas fa-sun"></i>';
+        }
+
+        // ========== CLICK HANDLERS ==========
+        function setupClicks() {
+            // Theme
+            document.getElementById('themeBtn').onclick = toggleTheme;
+
+            // Search
+            document.getElementById('searchInput').oninput = function() {
+                render(this.value);
+            };
+
+            // Add button
+            document.getElementById('addBtn').onclick = openAddModal;
+
+            // Close add modal
+            document.getElementById('closeAdd').onclick = closeAddModal;
+            document.getElementById('cancelBtn').onclick = closeAddModal;
+
+            // Camera
+            document.getElementById('cameraBtn').onclick = startCamera;
+
+            // Upload
+            document.getElementById('uploadBtn').onclick = function() {
+                document.getElementById('fileInput').click();
+            };
+            document.getElementById('fileInput').onchange = handleUpload;
+
+            // Location
+            document.getElementById('locBtn').onclick = getLocation;
+
+            // Address autocomplete
+            document.getElementById('addressInput').oninput = handleAddressInput;
+            document.getElementById('addressInput').onfocus = function() {
+                if (this.value.length >= 3) {
+                    document.getElementById('addressSuggestions').classList.add('show');
+                }
+            };
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.address-wrapper')) {
+                    document.getElementById('addressSuggestions').classList.remove('show');
+                }
+            });
+
+            // Save button - simple onclick
+            document.getElementById('saveBtn').onclick = savePlace;
+
+            // Close view modal
+            document.getElementById('closeView').onclick = closeViewModal;
+
+            // View actions
+            document.getElementById('navBtn').onclick = navigatePlace;
+            document.getElementById('favBtn').onclick = toggleViewFav;
+            document.getElementById('delBtn').onclick = deletePlace;
+
+            // Click outside to close
+            document.getElementById('addModal').onclick = function(e) {
+                if (e.target === this) closeAddModal();
+            };
+            document.getElementById('viewModal').onclick = function(e) {
+                if (e.target === this) closeViewModal();
+            };
+
+            console.log('Click handlers ready!');
+        }
+
+        // ========== RENDER ==========
+        function render(search = '') {
+            const list = document.getElementById('placesList');
+            const empty = document.getElementById('emptyState');
+
+            let filtered = places;
+            if (search) {
+                const q = search.toLowerCase();
+                filtered = places.filter(p => 
+                    p.name.toLowerCase().includes(q) || 
+                    p.address.toLowerCase().includes(q)
+                );
+            }
+
+            filtered.sort((a, b) => b.createdAt - a.createdAt);
+
+            if (places.length === 0) {
+                empty.classList.remove('hide');
+                list.innerHTML = '';
+            } else {
+                empty.classList.add('hide');
+                list.innerHTML = filtered.map(p => `
+                    <div class="card" onclick="openView('${p.id}')">
+                        <div class="card-img">
+                            <img src="${p.photo}" alt="">
+                            <span class="card-badge">${getEmoji(p.category)} ${p.category}</span>
+                            <button class="card-fav ${p.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${p.id}')">
+                                <i class="${p.favorite ? 'fas' : 'far'} fa-heart"></i>
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="card-title">${p.name}</div>
+                            <div class="card-address">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${p.address || 'No address'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Update stats
+            document.getElementById('statTotal').textContent = places.length;
+            document.getElementById('statFav').textContent = places.filter(p => p.favorite).length;
+        }
+
+        function getEmoji(cat) {
+            const map = { office:'🏢', shop:'🏪', warehouse:'🏭', client:'👤', supplier:'📦', other:'📍' };
+            return map[cat] || '📍';
+        }
+
+        // ========== ADD MODAL ==========
+        function openAddModal() {
+            photoData = null;
+            locationData = null;
+
+            document.getElementById('videoEl').style.display = 'none';
+            document.getElementById('previewImg').style.display = 'none';
+            document.getElementById('photoPlaceholder').style.display = 'flex';
+            document.getElementById('locSuccess').classList.remove('show');
+            document.getElementById('locBtn').disabled = false;
+            document.getElementById('locBtn').innerHTML = '<i class="fas fa-crosshairs"></i> Get Current Location';
+            document.getElementById('addressSuggestions').classList.remove('show');
+
+            document.getElementById('nameInput').value = '';
+            document.getElementById('catSelect').value = 'office';
+            document.getElementById('notesInput').value = '';
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('addressInput').value = '';
+            document.getElementById('favCheck').checked = false;
+
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        function closeAddModal() {
+            stopCamera();
+            document.getElementById('addModal').classList.remove('show');
+        }
+
+        // ========== CAMERA ==========
+        async function startCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+
+                const video = document.getElementById('videoEl');
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                document.getElementById('photoPlaceholder').style.display = 'none';
+                document.getElementById('previewImg').style.display = 'none';
+
+                document.getElementById('cameraBtn').innerHTML = '<i class="fas fa-circle"></i> Capture';
+                document.getElementById('cameraBtn').onclick = capturePhoto;
+
+                toast('Camera ready! Tap Capture');
+            } catch(e) {
+                console.error('Camera error:', e);
+                toast('Camera not available');
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('videoEl');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            photoData = canvas.toDataURL('image/jpeg', 0.8);
+
+            document.getElementById('previewImg').src = photoData;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('videoEl').style.display = 'none';
+
+            stopCamera();
+
+            document.getElementById('cameraBtn').innerHTML = '<i class="fas fa-redo"></i> Retake';
+            document.getElementById('cameraBtn').onclick = startCamera;
+
+            toast('Photo captured!');
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+        }
+
+        function handleUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                photoData = ev.target.result;
+                document.getElementById('previewImg').src = photoData;
+                document.getElementById('previewImg').style.display = 'block';
+                document.getElementById('photoPlaceholder').style.display = 'none';
+                document.getElementById('videoEl').style.display = 'none';
+                stopCamera();
+                toast('Photo uploaded!');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // ========== LOCATION ==========
+        function getLocation() {
+            const btn = document.getElementById('locBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting location...';
+
+            if (!navigator.geolocation) {
+                toast('Geolocation not supported');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-crosshairs"></i> Get Current Location';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                async function(pos) {
+                    const lat = pos.coords.latitude;
+                    const lng = pos.coords.longitude;
+                    locationData = { lat, lng };
+
+                    // Get address
+                    try {
+                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                        const data = await res.json();
+                        const addr = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        document.getElementById('addressInput').value = addr;
+                        document.getElementById('locText').textContent = 'Location captured!';
+                    } catch(e) {
+                        document.getElementById('addressInput').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                        document.getElementById('locText').textContent = 'Location saved!';
+                    }
+
+                    document.getElementById('locSuccess').classList.add('show');
+                    btn.innerHTML = '<i class="fas fa-check"></i> Location Saved';
+                    toast('Location captured!');
+                },
+                function(err) {
+                    console.error('Location error:', err);
+                    toast('Could not get location');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-crosshairs"></i> Try Again';
+                },
+                { enableHighAccuracy: true, timeout: 15000 }
+            );
+        }
+
+        // ========== ADDRESS AUTOCOMPLETE ==========
+        function handleAddressInput() {
+            const query = document.getElementById('addressInput').value.trim();
+            const suggestionsDiv = document.getElementById('addressSuggestions');
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Hide if less than 3 characters
+            if (query.length < 3) {
+                suggestionsDiv.classList.remove('show');
+                return;
+            }
+
+            // Show loading
+            suggestionsDiv.innerHTML = '<div class="suggestion-loading"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
+            suggestionsDiv.classList.add('show');
+
+            // Debounce - wait 500ms before searching
+            searchTimeout = setTimeout(async function() {
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
+                    const results = await res.json();
+
+                    if (results.length === 0) {
+                        suggestionsDiv.innerHTML = '<div class="suggestion-loading">No results found. You can still use your typed address.</div>';
+                    } else {
+                        suggestionsDiv.innerHTML = results.map(r => `
+                            <div class="suggestion-item" onclick="selectAddress('${r.display_name.replace(/'/g, "\\'")}', ${r.lat}, ${r.lon})">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <span>${r.display_name}</span>
+                            </div>
+                        `).join('');
+                    }
+                } catch(e) {
+                    console.error('Search error:', e);
+                    suggestionsDiv.innerHTML = '<div class="suggestion-loading">Search failed. You can still use your typed address.</div>';
+                }
+            }, 500);
+        }
+
+        function selectAddress(address, lat, lon) {
+            document.getElementById('addressInput').value = address;
+            locationData = { lat: parseFloat(lat), lng: parseFloat(lon) };
+            document.getElementById('addressSuggestions').classList.remove('show');
+            document.getElementById('locSuccess').classList.add('show');
+            document.getElementById('locText').textContent = 'Address selected!';
+            toast('Address selected!');
+        }
+
+        // ========== SAVE PLACE ==========
+        function savePlace() {
+            const name = document.getElementById('nameInput').value.trim();
+
+            if (!name) {
+                toast('Please enter a name');
+                return;
+            }
+
+            // Photo is optional - use placeholder if no photo
+            const defaultPhoto = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#4A90A4" width="400" height="300"/><text x="200" y="150" text-anchor="middle" fill="white" font-size="80" dy=".3em">📍</text></svg>');
+            const finalPhoto = photoData || defaultPhoto;
+
+            const place = {
+                id: Date.now().toString(),
+                name: name,
+                category: document.getElementById('catSelect').value,
+                photo: finalPhoto,
+                address: document.getElementById('addressInput').value.trim() || 'No address',
+                coords: locationData,
+                notes: document.getElementById('notesInput').value.trim(),
+                phone: document.getElementById('phoneInput').value.trim(),
+                favorite: document.getElementById('favCheck').checked,
+                createdAt: Date.now()
+            };
+
+            places.push(place);
+            saveData();
+            render();
+            closeAddModal();
+            toast('Place saved!');
+        }
+
+        // ========== VIEW MODAL ==========
+        function openView(id) {
+            const p = places.find(x => x.id === id);
+            if (!p) return;
+
+            currentPlace = p;
+
+            document.getElementById('viewImg').src = p.photo;
+            document.getElementById('viewCat').textContent = getEmoji(p.category) + ' ' + p.category;
+            document.getElementById('viewName').textContent = p.name;
+            document.getElementById('viewAddr').textContent = p.address;
+
+            if (p.phone) {
+                document.getElementById('viewPhoneRow').style.display = 'flex';
+                document.getElementById('viewPhone').textContent = p.phone;
+                document.getElementById('viewPhone').href = 'tel:' + p.phone;
+            } else {
+                document.getElementById('viewPhoneRow').style.display = 'none';
+            }
+
+            document.getElementById('viewDate').textContent = new Date(p.createdAt).toLocaleDateString();
+
+            if (p.notes) {
+                document.getElementById('viewNotesBox').style.display = 'block';
+                document.getElementById('viewNotes').textContent = p.notes;
+            } else {
+                document.getElementById('viewNotesBox').style.display = 'none';
+            }
+
+            document.getElementById('favBtn').innerHTML = p.favorite 
+                ? '<i class="fas fa-heart"></i> Favorited' 
+                : '<i class="far fa-heart"></i> Favorite';
+
+            document.getElementById('viewModal').classList.add('show');
+        }
+
+        function closeViewModal() {
+            document.getElementById('viewModal').classList.remove('show');
+            currentPlace = null;
+        }
+
+        // ========== ACTIONS ==========
+        function toggleFav(id) {
+            const p = places.find(x => x.id === id);
+            if (p) {
+                p.favorite = !p.favorite;
+                saveData();
+                render();
+            }
+        }
+
+        function toggleViewFav() {
+            if (!currentPlace) return;
+            currentPlace.favorite = !currentPlace.favorite;
+            saveData();
+            document.getElementById('favBtn').innerHTML = currentPlace.favorite 
+                ? '<i class="fas fa-heart"></i> Favorited' 
+                : '<i class="far fa-heart"></i> Favorite';
+            render();
+            toast(currentPlace.favorite ? 'Added to favorites!' : 'Removed from favorites');
+        }
+
+        function navigatePlace() {
+            if (!currentPlace) return;
+
+            let url;
+            if (currentPlace.coords) {
+                url = `https://www.google.com/maps/dir/?api=1&destination=${currentPlace.coords.lat},${currentPlace.coords.lng}`;
+            } else {
+                url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentPlace.address)}`;
+            }
+            window.open(url, '_blank');
+        }
+
+        function deletePlace() {
+            if (!currentPlace) return;
+            if (confirm('Delete this place?')) {
+                places = places.filter(p => p.id !== currentPlace.id);
+                saveData();
+                render();
+                closeViewModal();
+                toast('Place deleted');
+            }
+        }
+
+        // ========== TOAST ==========
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastText').textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        // Make functions global
+        window.openView = openView;
+        window.toggleFav = toggleFav;
+        window.selectAddress = selectAddress;
+    </script>
+
+</body>
+</html>
