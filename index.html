@@ -521,7 +521,7 @@
             height: 20px;
         }
 
-        /* Modal Footer */
+        /* Modal Footer - FIXED */
         .modal-foot {
             display: flex;
             gap: 10px;
@@ -529,25 +529,24 @@
             border-top: 1px solid var(--border);
         }
 
-        .btn-cancel {
-            padding: 14px 20px;
-            background: var(--bg);
+        .modal-foot button {
+            padding: 14px 24px;
             border: none;
             border-radius: 10px;
             font-size: 1rem;
             cursor: pointer;
+            display: block;
+        }
+
+        .btn-cancel {
+            background: var(--bg);
             color: var(--text);
         }
 
         .btn-save {
             flex: 1;
-            padding: 14px;
             background: var(--success);
             color: white;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            cursor: pointer;
         }
 
         /* View Modal */
@@ -797,8 +796,8 @@
 
             </div>
             <div class="modal-foot">
-                <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
-                <button type="button" class="btn-save" id="saveBtn">Save Place</button>
+                <button class="btn-cancel" id="cancelBtn">Cancel</button>
+                <button class="btn-save" id="saveBtn">Save Place</button>
             </div>
         </div>
     </div>
@@ -851,6 +850,8 @@
         let locationData = null;
         let cameraStream = null;
         let searchTimeout = null;
+        let userLat = null;
+        let userLng = null;
 
         // ========== INIT ==========
         window.onload = function() {
@@ -859,7 +860,27 @@
             render();
             loadTheme();
             setupClicks();
+            getUserLocationForSearch();
         };
+
+        // ========== GET USER LOCATION FOR BETTER SEARCH ==========
+        function getUserLocationForSearch() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(pos) {
+                        userLat = pos.coords.latitude;
+                        userLng = pos.coords.longitude;
+                        console.log('Got user location for search:', userLat, userLng);
+                    },
+                    function(err) {
+                        console.log('Could not get location for search, using India default');
+                        // Default to center of India
+                        userLat = 20.5937;
+                        userLng = 78.9629;
+                    }
+                );
+            }
+        }
 
         // ========== LOAD/SAVE ==========
         function loadData() {
@@ -937,7 +958,7 @@
                 }
             });
 
-            // Save button - simple onclick
+            // Save button - FIXED like cancel button
             document.getElementById('saveBtn').onclick = savePlace;
 
             // Close view modal
@@ -960,54 +981,67 @@
         }
 
         // ========== RENDER ==========
-        function render(search = '') {
-            const list = document.getElementById('placesList');
-            const empty = document.getElementById('emptyState');
+        function render(search) {
+            var list = document.getElementById('placesList');
+            var empty = document.getElementById('emptyState');
 
-            let filtered = places;
+            var filtered = places;
             if (search) {
-                const q = search.toLowerCase();
-                filtered = places.filter(p => 
-                    p.name.toLowerCase().includes(q) || 
-                    p.address.toLowerCase().includes(q)
-                );
+                var q = search.toLowerCase();
+                filtered = places.filter(function(p) {
+                    return p.name.toLowerCase().indexOf(q) >= 0 || 
+                           p.address.toLowerCase().indexOf(q) >= 0;
+                });
             }
 
-            filtered.sort((a, b) => b.createdAt - a.createdAt);
+            filtered.sort(function(a, b) {
+                return b.createdAt - a.createdAt;
+            });
 
             if (places.length === 0) {
                 empty.classList.remove('hide');
                 list.innerHTML = '';
             } else {
                 empty.classList.add('hide');
-                list.innerHTML = filtered.map(p => `
-                    <div class="card" onclick="openView('${p.id}')">
-                        <div class="card-img">
-                            <img src="${p.photo}" alt="">
-                            <span class="card-badge">${getEmoji(p.category)} ${p.category}</span>
-                            <button class="card-fav ${p.favorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${p.id}')">
-                                <i class="${p.favorite ? 'fas' : 'far'} fa-heart"></i>
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div class="card-title">${p.name}</div>
-                            <div class="card-address">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span>${p.address || 'No address'}</span>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                var html = '';
+                for (var i = 0; i < filtered.length; i++) {
+                    var p = filtered[i];
+                    html += '<div class="card" onclick="openView(\'' + p.id + '\')">' +
+                        '<div class="card-img">' +
+                        '<img src="' + p.photo + '" alt="">' +
+                        '<span class="card-badge">' + getEmoji(p.category) + ' ' + p.category + '</span>' +
+                        '<button class="card-fav ' + (p.favorite ? 'active' : '') + '" onclick="event.stopPropagation(); toggleFav(\'' + p.id + '\')">' +
+                        '<i class="' + (p.favorite ? 'fas' : 'far') + ' fa-heart"></i>' +
+                        '</button>' +
+                        '</div>' +
+                        '<div class="card-body">' +
+                        '<div class="card-title">' + p.name + '</div>' +
+                        '<div class="card-address">' +
+                        '<i class="fas fa-map-marker-alt"></i>' +
+                        '<span>' + (p.address || 'No address') + '</span>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                }
+                list.innerHTML = html;
             }
 
             // Update stats
             document.getElementById('statTotal').textContent = places.length;
-            document.getElementById('statFav').textContent = places.filter(p => p.favorite).length;
+            var favCount = 0;
+            for (var j = 0; j < places.length; j++) {
+                if (places[j].favorite) favCount++;
+            }
+            document.getElementById('statFav').textContent = favCount;
         }
 
         function getEmoji(cat) {
-            const map = { office:'🏢', shop:'🏪', warehouse:'🏭', client:'👤', supplier:'📦', other:'📍' };
-            return map[cat] || '📍';
+            if (cat === 'office') return '🏢';
+            if (cat === 'shop') return '🏪';
+            if (cat === 'warehouse') return '🏭';
+            if (cat === 'client') return '👤';
+            if (cat === 'supplier') return '📦';
+            return '📍';
         }
 
         // ========== ADD MODAL ==========
@@ -1039,14 +1073,13 @@
         }
 
         // ========== CAMERA ==========
-        async function startCamera() {
-            try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } 
-                });
-
-                const video = document.getElementById('videoEl');
-                video.srcObject = cameraStream;
+        function startCamera() {
+            navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: 'environment' } 
+            }).then(function(stream) {
+                cameraStream = stream;
+                var video = document.getElementById('videoEl');
+                video.srcObject = stream;
                 video.style.display = 'block';
                 document.getElementById('photoPlaceholder').style.display = 'none';
                 document.getElementById('previewImg').style.display = 'none';
@@ -1055,15 +1088,15 @@
                 document.getElementById('cameraBtn').onclick = capturePhoto;
 
                 toast('Camera ready! Tap Capture');
-            } catch(e) {
+            }).catch(function(e) {
                 console.error('Camera error:', e);
                 toast('Camera not available');
-            }
+            });
         }
 
         function capturePhoto() {
-            const video = document.getElementById('videoEl');
-            const canvas = document.createElement('canvas');
+            var video = document.getElementById('videoEl');
+            var canvas = document.createElement('canvas');
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             canvas.getContext('2d').drawImage(video, 0, 0);
@@ -1084,16 +1117,19 @@
 
         function stopCamera() {
             if (cameraStream) {
-                cameraStream.getTracks().forEach(t => t.stop());
+                var tracks = cameraStream.getTracks();
+                for (var i = 0; i < tracks.length; i++) {
+                    tracks[i].stop();
+                }
                 cameraStream = null;
             }
         }
 
         function handleUpload(e) {
-            const file = e.target.files[0];
+            var file = e.target.files[0];
             if (!file) return;
 
-            const reader = new FileReader();
+            var reader = new FileReader();
             reader.onload = function(ev) {
                 photoData = ev.target.result;
                 document.getElementById('previewImg').src = photoData;
@@ -1108,7 +1144,7 @@
 
         // ========== LOCATION ==========
         function getLocation() {
-            const btn = document.getElementById('locBtn');
+            var btn = document.getElementById('locBtn');
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Getting location...';
 
@@ -1120,22 +1156,25 @@
             }
 
             navigator.geolocation.getCurrentPosition(
-                async function(pos) {
-                    const lat = pos.coords.latitude;
-                    const lng = pos.coords.longitude;
-                    locationData = { lat, lng };
+                function(pos) {
+                    var lat = pos.coords.latitude;
+                    var lng = pos.coords.longitude;
+                    locationData = { lat: lat, lng: lng };
+                    userLat = lat;
+                    userLng = lng;
 
                     // Get address
-                    try {
-                        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
-                        const data = await res.json();
-                        const addr = data.display_name || `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                        document.getElementById('addressInput').value = addr;
-                        document.getElementById('locText').textContent = 'Location captured!';
-                    } catch(e) {
-                        document.getElementById('addressInput').value = `${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-                        document.getElementById('locText').textContent = 'Location saved!';
-                    }
+                    fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1')
+                        .then(function(res) { return res.json(); })
+                        .then(function(data) {
+                            var addr = data.display_name || (lat.toFixed(4) + ', ' + lng.toFixed(4));
+                            document.getElementById('addressInput').value = addr;
+                            document.getElementById('locText').textContent = 'Location captured!';
+                        })
+                        .catch(function() {
+                            document.getElementById('addressInput').value = lat.toFixed(4) + ', ' + lng.toFixed(4);
+                            document.getElementById('locText').textContent = 'Location saved!';
+                        });
 
                     document.getElementById('locSuccess').classList.add('show');
                     btn.innerHTML = '<i class="fas fa-check"></i> Location Saved';
@@ -1151,10 +1190,10 @@
             );
         }
 
-        // ========== ADDRESS AUTOCOMPLETE ==========
+        // ========== ADDRESS AUTOCOMPLETE (INDIA FOCUSED) ==========
         function handleAddressInput() {
-            const query = document.getElementById('addressInput').value.trim();
-            const suggestionsDiv = document.getElementById('addressSuggestions');
+            var query = document.getElementById('addressInput').value.trim();
+            var suggestionsDiv = document.getElementById('addressSuggestions');
 
             // Clear previous timeout
             if (searchTimeout) {
@@ -1172,25 +1211,41 @@
             suggestionsDiv.classList.add('show');
 
             // Debounce - wait 500ms before searching
-            searchTimeout = setTimeout(async function() {
-                try {
-                    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`);
-                    const results = await res.json();
-
-                    if (results.length === 0) {
-                        suggestionsDiv.innerHTML = '<div class="suggestion-loading">No results found. You can still use your typed address.</div>';
-                    } else {
-                        suggestionsDiv.innerHTML = results.map(r => `
-                            <div class="suggestion-item" onclick="selectAddress('${r.display_name.replace(/'/g, "\\'")}', ${r.lat}, ${r.lon})">
-                                <i class="fas fa-map-marker-alt"></i>
-                                <span>${r.display_name}</span>
-                            </div>
-                        `).join('');
-                    }
-                } catch(e) {
-                    console.error('Search error:', e);
-                    suggestionsDiv.innerHTML = '<div class="suggestion-loading">Search failed. You can still use your typed address.</div>';
+            searchTimeout = setTimeout(function() {
+                // Build search URL with India focus
+                var searchUrl = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=6&countrycodes=in';
+                
+                // Add location bias if available
+                if (userLat && userLng) {
+                    var latMin = userLat - 1;
+                    var latMax = userLat + 1;
+                    var lngMin = userLng - 1;
+                    var lngMax = userLng + 1;
+                    searchUrl += '&viewbox=' + lngMin + ',' + latMax + ',' + lngMax + ',' + latMin + '&bounded=0';
                 }
+
+                fetch(searchUrl)
+                    .then(function(res) { return res.json(); })
+                    .then(function(results) {
+                        if (results.length === 0) {
+                            suggestionsDiv.innerHTML = '<div class="suggestion-loading">No results found.<br>You can still use your typed address.</div>';
+                        } else {
+                            var html = '';
+                            for (var i = 0; i < results.length; i++) {
+                                var r = results[i];
+                                var displayName = r.display_name.replace(/'/g, "\\'");
+                                html += '<div class="suggestion-item" onclick="selectAddress(\'' + displayName + '\', ' + r.lat + ', ' + r.lon + ')">' +
+                                    '<i class="fas fa-map-marker-alt"></i>' +
+                                    '<span>' + r.display_name + '</span>' +
+                                    '</div>';
+                            }
+                            suggestionsDiv.innerHTML = html;
+                        }
+                    })
+                    .catch(function(e) {
+                        console.error('Search error:', e);
+                        suggestionsDiv.innerHTML = '<div class="suggestion-loading">Search failed.<br>You can still use your typed address.</div>';
+                    });
             }, 500);
         }
 
@@ -1205,7 +1260,7 @@
 
         // ========== SAVE PLACE ==========
         function savePlace() {
-            const name = document.getElementById('nameInput').value.trim();
+            var name = document.getElementById('nameInput').value.trim();
 
             if (!name) {
                 toast('Please enter a name');
@@ -1213,10 +1268,10 @@
             }
 
             // Photo is optional - use placeholder if no photo
-            const defaultPhoto = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#4A90A4" width="400" height="300"/><text x="200" y="150" text-anchor="middle" fill="white" font-size="80" dy=".3em">📍</text></svg>');
-            const finalPhoto = photoData || defaultPhoto;
+            var defaultPhoto = 'data:image/svg+xml,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300"><rect fill="#4A90A4" width="400" height="300"/><text x="200" y="150" text-anchor="middle" fill="white" font-size="80" dy=".3em">📍</text></svg>');
+            var finalPhoto = photoData || defaultPhoto;
 
-            const place = {
+            var place = {
                 id: Date.now().toString(),
                 name: name,
                 category: document.getElementById('catSelect').value,
@@ -1238,7 +1293,13 @@
 
         // ========== VIEW MODAL ==========
         function openView(id) {
-            const p = places.find(x => x.id === id);
+            var p = null;
+            for (var i = 0; i < places.length; i++) {
+                if (places[i].id === id) {
+                    p = places[i];
+                    break;
+                }
+            }
             if (!p) return;
 
             currentPlace = p;
@@ -1279,12 +1340,14 @@
 
         // ========== ACTIONS ==========
         function toggleFav(id) {
-            const p = places.find(x => x.id === id);
-            if (p) {
-                p.favorite = !p.favorite;
-                saveData();
-                render();
+            for (var i = 0; i < places.length; i++) {
+                if (places[i].id === id) {
+                    places[i].favorite = !places[i].favorite;
+                    break;
+                }
             }
+            saveData();
+            render();
         }
 
         function toggleViewFav() {
@@ -1301,11 +1364,11 @@
         function navigatePlace() {
             if (!currentPlace) return;
 
-            let url;
+            var url;
             if (currentPlace.coords) {
-                url = `https://www.google.com/maps/dir/?api=1&destination=${currentPlace.coords.lat},${currentPlace.coords.lng}`;
+                url = 'https://www.google.com/maps/dir/?api=1&destination=' + currentPlace.coords.lat + ',' + currentPlace.coords.lng;
             } else {
-                url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(currentPlace.address)}`;
+                url = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(currentPlace.address);
             }
             window.open(url, '_blank');
         }
@@ -1313,7 +1376,13 @@
         function deletePlace() {
             if (!currentPlace) return;
             if (confirm('Delete this place?')) {
-                places = places.filter(p => p.id !== currentPlace.id);
+                var newPlaces = [];
+                for (var i = 0; i < places.length; i++) {
+                    if (places[i].id !== currentPlace.id) {
+                        newPlaces.push(places[i]);
+                    }
+                }
+                places = newPlaces;
                 saveData();
                 render();
                 closeViewModal();
@@ -1323,10 +1392,12 @@
 
         // ========== TOAST ==========
         function toast(msg) {
-            const t = document.getElementById('toast');
+            var t = document.getElementById('toast');
             document.getElementById('toastText').textContent = msg;
             t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+            setTimeout(function() { 
+                t.classList.remove('show'); 
+            }, 3000);
         }
 
         // Make functions global
